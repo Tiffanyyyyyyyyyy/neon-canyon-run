@@ -30,6 +30,9 @@
   #bigEmoji,#bigEmoji2{font-size:clamp(56px,20vw,110px);margin-bottom:8px}
   .hint{color:#889;font-size:clamp(11px,3vw,14px);max-width:340px;line-height:1.55;margin-top:14px}
   #missionList{text-align:left;font-size:clamp(13px,3.8vw,17px);line-height:1.9;margin:10px 0}
+  #themes{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:4px 0 2px;max-width:420px}
+  .tbtn{background:rgba(255,255,255,.05);border:1.5px solid #556;color:#ccd;border-radius:20px;padding:8px 14px;font-family:inherit;font-size:clamp(12px,3.4vw,15px)}
+  .tbtn.sel{border-color:#ffd700;color:#ffd700;text-shadow:0 0 8px #ffd700}
 </style>
 </head>
 <body>
@@ -49,7 +52,15 @@
   <button class="btn" data-d="0">CHILL &middot; sparse obstacles</button>
   <button class="btn med" data-d="1">CLASSIC &middot; balanced</button>
   <button class="btn hard" data-d="2">INSANE &middot; wall to wall</button>
+  <p class="neonC" style="margin:12px 0 2px;font-size:clamp(13px,3.8vw,17px)">choose your background</p>
+  <div id="themes">
+    <button class="tbtn sel" data-t="neon">&#127751; NEON CITY</button>
+    <button class="tbtn" data-t="desert">&#127964;&#65039; DESERT</button>
+    <button class="tbtn" data-t="sea">&#127754; SEASIDE</button>
+    <button class="tbtn" data-t="mountain">&#9968;&#65039; MOUNTAINS</button>
+  </div>
   <button class="btn small" id="tiltBtn">TILT STEERING: OFF</button>
+  <p class="hint" id="modeTag" style="margin:6px 0 0"></p>
   <p class="hint">drag &larr;&rarr; to steer (follows your finger) &middot; flick &uarr; = JUMP &middot; &#9670; 50 gems = +1 life &middot; &#129522; magnet &middot; &#128737;&#65039; shield &middot; &#128012; slow-mo &middot; &#128640; rocket = 10s of huge jumps over everything &middot; green chevron pads launch a MEGA JUMP over a line of gold</p>
 </div>
 
@@ -91,8 +102,24 @@ window.onerror=(msg,src,line)=>{
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 const hud=$('hud'),fxBar=$('fx'),menu=$('menu'),pauseOv=$('pauseOv'),lifeOv=$('lifeOv'),overOv=$('overOv');
-let W,H,dpr;
-function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+let W,H,dpr,RW,RH,GX=0,mode='mobile';
+function resize(){
+  dpr=Math.min(devicePixelRatio||1,2);
+  RW=innerWidth;RH=innerHeight;
+  // web mode: wide screens get a phone-proportioned game column, centered
+  const wide=RW/RH>0.72&&RW>760;
+  mode=wide?'web':'mobile';
+  H=RH;W=wide?Math.min(RW,Math.round(RH*.62)):RW;
+  GX=Math.round((RW-W)/2);
+  cv.width=RW*dpr;cv.height=RH*dpr;cv.style.width=RW+'px';cv.style.height=RH+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  hud.style.left=GX+'px';hud.style.right='auto';hud.style.width=W+'px';hud.style.boxSizing='border-box';
+  fxBar.style.left=GX+'px';fxBar.style.right='auto';fxBar.style.width=W+'px';
+  const mt=$('modeTag');
+  if(mt)mt.textContent=mode==='web'
+    ?'WEB MODE \u2014 keyboard: \u2190 \u2192 steer \u00B7 \u2191 or W jump \u00B7 P pause \u00B7 mouse-drag also steers'
+    :'MOBILE MODE \u2014 touch controls';
+}
 addEventListener('resize',resize);resize();
 
 // ---------- audio + haptics ----------
@@ -124,6 +151,29 @@ const PALS=[
   ['#000010','#001a4d','#00d4ff','#bfe9ff','#020a20','#0d1a38','#122043','#00d4ff','#4dff88'],
   ['#180008','#48001a','#ff4d00','#ffae42','#200010','#38152a','#401a30','#ff4d00','#ff2d78']
 ];
+// each theme: 4 time-of-day palettes [skyTop,skyMid,horizon,sun,ground,roadA,roadB,railA,railB]
+const THEMES={
+  neon:PALS,
+  desert:[
+    ['#2b1a0a','#7a3f10','#ffb347','#fff3b0','#3d2410','#5a3a1a','#66431f','#ff8c42','#ffd700'],
+    ['#1a0b2e','#5c2a6e','#ff8c42','#ffd39b','#2e1a08','#4a2e12','#553618','#ff2d78','#ffd700'],
+    ['#0a0a1e','#1a1a3d','#4a3b8c','#e8e8ff','#141008','#2a2012','#332816','#8888ff','#ffd700'],
+    ['#301040','#8c3a5c','#ffb347','#fff3b0','#33200c','#4d3014','#583a18','#ff8c42','#00ffff']
+  ],
+  sea:[
+    ['#03203c','#0a5e8c','#7fd4e8','#fff3b0','#0a2a33','#12414d','#174d5a','#00ffff','#ffd700'],
+    ['#1a0b2e','#8c2a5c','#ff8c42','#ffd39b','#0a2a33','#123d4a','#164856','#ff2d78','#ffd700'],
+    ['#000c1e','#062042','#1e5c8c','#bfe9ff','#06222c','#0d3340','#103c4a','#00d4ff','#4dff88'],
+    ['#0a2038','#1a6ea0','#a0e8ff','#ffffff','#0a2c36','#134450','#17505e','#00ffff','#ff2d78']
+  ],
+  mountain:[
+    ['#12203a','#3a5a7a','#a8c8e0','#fff3b0','#16261a','#28402a','#2e4a30','#4dff88','#ffd700'],
+    ['#1a0b2e','#5c3a6e','#ffb347','#ffd39b','#14231a','#243a26','#2a442c','#ff8c42','#ffd700'],
+    ['#050510','#101a30','#30485c','#e8e8ff','#0c160e','#1a2c1c','#203422','#00d4ff','#4dff88'],
+    ['#203040','#4a7a9a','#c0e0f0','#ffffff','#18281c','#2a422c','#304c32','#00ffff','#ff2d78']
+  ]
+};
+let theme='neon',sceneShift=0;
 let state='menu';
 let diff=1,segs=[],pos=0,baseSpeed=26,speed=0,lane=1,laneX=0,dist=0,bonus=0,score=0,gems=0,lives=MAXLIVES,best=0;
 let jumpT=0,airborne=false,shake=0,grimT=0,intensity=0,inputHeat=0,parts=[],pops=[];
@@ -299,11 +349,33 @@ addEventListener('touchend',e=>{
   if(tx===null||state!=='play'){tx=null;return}
   if(!gestured){
     const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
-    if(Math.abs(dx)<12&&Math.abs(dy)<12)move(e.changedTouches[0].clientX>W/2?1:-1); // tap = screen split
+    if(Math.abs(dx)<12&&Math.abs(dy)<12)move((e.changedTouches[0].clientX-GX)>W/2?1:-1); // tap = screen split
   }
   laneF=lane;   // snap to lane center when the finger lifts
   tx=null;
 },{passive:true});
+// mouse drag steering (web mode): hold + drag = steer, quick upward drag = jump, plain click = split
+let mdown=false,mX=0,mY2=0,mPT=0;
+addEventListener('mousedown',e=>{audio();
+  if(state==='life'){respawn();return}
+  if(state==='over'){show('menu');return}
+  if(state!=='play'||e.clientX==null)return;
+  mdown=true;mX=e.clientX;mY2=e.clientY;mPT=performance.now();gestured=false;
+});
+addEventListener('mousemove',e=>{
+  if(!mdown||state!=='play')return;
+  const dx=e.clientX-mX;
+  if(dx!==0){steer(dx);mX=e.clientX;gestured=true}
+  let dms=performance.now()-mPT;if(dms<=0)dms=16;
+  const vy=(e.clientY-mY2)/dms;
+  if(vy<-.55&&!airborne){jump();gestured=true}
+  mY2=e.clientY;mPT=performance.now();
+});
+addEventListener('mouseup',e=>{
+  if(!mdown)return;mdown=false;
+  if(!gestured&&state==='play'&&e.clientX!=null)move((e.clientX-GX)>W/2?1:-1);
+  laneF=lane;
+});
 addEventListener('keydown',e=>{audio();
   if(state==='life'&&(e.key===' '||e.key==='Enter')){respawn();return}
   if(state==='over'&&(e.key===' '||e.key==='Enter')){show('menu');return}
@@ -312,15 +384,13 @@ addEventListener('keydown',e=>{audio();
   if(e.key==='ArrowUp'||e.key==='w'||e.key===' ')jump();
   if(e.key==='Escape'||e.key==='p'){if(state==='play')pause();else if(state==='pause')resume()}
 });
-addEventListener('mousedown',()=>{audio();
-  if(state==='life')respawn();
-  else if(state==='over')show('menu');
-});
 function pause(){if(state!=='play')return;$('pScore').textContent=score;$('missionList').innerHTML=missionHTML();show('pause')}
 function resume(){show('play');last=performance.now()}
 $('pauseBtn').onclick=pause;$('resumeBtn').onclick=resume;
 $('quitBtn').onclick=()=>show('menu');
 menu.querySelectorAll('.btn[data-d]').forEach(b=>{b.onclick=()=>{audio();startRun(+b.dataset.d)}});
+document.querySelectorAll('.tbtn').forEach(b=>{b.onclick=()=>{audio();theme=b.dataset.t;
+  document.querySelectorAll('.tbtn').forEach(x=>x.classList.toggle('sel',x===b))}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play')pause()});
 
 let tiltOn=false,tiltBound=false;
@@ -344,11 +414,15 @@ $('tiltBtn').onclick=()=>{
 
 // ---------- update ----------
 function update(dt,now){
+  // theme palette: lerp across the day/night cycle (also live behind the menu)
+  const TP=THEMES[theme];
+  const f0=dist/500,pi=Math.floor(f0)%TP.length,pn=(pi+1)%TP.length,pt=f0-Math.floor(f0);
+  for(let k=0;k<9;k++)pal[k]=hexLerp(TP[pi][k],TP[pn][k],pt);
   parts.forEach(p=>{p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=340*dt});
   parts=parts.filter(p=>p.t<p.life);
   pops.forEach(p=>p.t+=dt);pops=pops.filter(p=>p.t<p.life);
   shake*=Math.pow(.02,dt);grimT=Math.max(0,grimT-dt*.7);flashT=Math.max(0,flashT-dt);
-  if(state==='menu')pos+=dt*SEG*1.2; // slow attract-mode scroll behind menu
+  if(state==='menu'){pos+=dt*SEG*1.2;sceneShift+=dt*.5}
   if(state!=='play'){
     if(state==='menu'){const f=Math.floor(pos/SEG);while(segs.length&&segs[0].i<f-2){segs.shift();addSeg(segs[segs.length-1].i+1,true)}}
     return;
@@ -365,9 +439,7 @@ function update(dt,now){
   pos+=speed*wdt*SEG*.14;
   dist+=speed*wdt;
   score=Math.floor(dist+bonus);
-
-  const f=dist/500,pi=Math.floor(f)%PALS.length,pn=(pi+1)%PALS.length,pt=f-Math.floor(f);
-  for(let k=0;k<PALS[0].length;k++)pal[k]=hexLerp(PALS[pi][k],PALS[pn][k],pt);
+  sceneShift+=wdt*(.5+curveAt(Math.floor(pos/SEG))*.09); // scenery parallax follows the bends
 
   if(airborne){jumpT+=dt;if(jumpT>jumpDur){airborne=false;megaAir=false}}
 
@@ -430,18 +502,64 @@ function shade(rgb,f){
   const m=rgb.match(/\d+/g);if(!m)return rgb;
   return 'rgb('+m.slice(0,3).map(v=>Math.min(255,Math.round(v*f))).join(',')+')';
 }
+function hexShade(hex,f){ // works on '#rrggbb' too
+  if(hex[0]!=='#')return shade(hex,f);
+  const p=parseInt(hex.slice(1),16);
+  const r=Math.min(255,Math.round((p>>16)*f)),g=Math.min(255,Math.round(((p>>8)&255)*f)),b=Math.min(255,Math.round((p&255)*f));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function drawScenery(t,Y0){
+  if(theme==='desert'){          // rolling dune silhouettes, two parallax layers
+    for(let L=0;L<2;L++){
+      const amp=H*(L?.035:.06),freq=(L?.017:.009),ph=sceneShift*(L?.6:.3)+L*2;
+      ctx.fillStyle=hexShade(pal[1],L?.45:.65);
+      ctx.beginPath();ctx.moveTo(-20,Y0);
+      for(let x=-20;x<=W+20;x+=14)ctx.lineTo(x,Y0-Math.abs(Math.sin(x*freq+ph))*amp);
+      ctx.lineTo(W+20,Y0);ctx.closePath();ctx.fill();
+    }
+  }else if(theme==='sea'){       // ocean band, shimmer, sun reflection
+    const g=ctx.createLinearGradient(0,Y0-H*.07,0,Y0);
+    g.addColorStop(0,hexShade(pal[2],.55));g.addColorStop(1,hexShade(pal[1],.5));
+    ctx.fillStyle=g;ctx.fillRect(-20,Y0-H*.07,W+40,H*.07);
+    ctx.fillStyle='rgba(255,240,180,.28)';
+    for(let i=0;i<6;i++){const yw=Y0-H*.012*i-2;
+      ctx.fillRect(W/2-W*.05*(1-i*.12)+Math.sin(t*.003+i)*6,yw,W*.1*(1-i*.12),2)}
+    ctx.fillStyle='rgba(255,255,255,.14)';
+    for(let i=0;i<14;i++){const xw=((i*137+sceneShift*40)%(W+40))-20,yw=Y0-2-(i%5)*H*.011;
+      ctx.fillRect(xw,yw,14,1.5)}
+  }else if(theme==='mountain'){  // jagged ridge lines, two parallax layers
+    for(let L=0;L<2;L++){
+      const amp=H*(L?.05:.1),k=(L?.02:.011),ph=sceneShift*(L?.5:.25)+L*7;
+      ctx.fillStyle=hexShade(pal[1],L?.4:.6);
+      ctx.beginPath();ctx.moveTo(-20,Y0);
+      for(let x=-20;x<=W+20;x+=10){
+        const u=(x*k+ph)/Math.PI;
+        const tri=Math.abs((u%2+2)%2-1);
+        ctx.lineTo(x,Y0-(0.25+0.75*tri)*amp*(0.6+0.4*Math.sin(x*.003+L)));
+      }
+      ctx.lineTo(W+20,Y0);ctx.closePath();ctx.fill();
+    }
+  }
+}
 
 // ---------- render (rebuilt projection: near row fills bottom, far rows converge on horizon) ----------
 function render(t){
+  // full-window backdrop (visible as gutters in web mode)
+  ctx.fillStyle='#05000f';ctx.fillRect(0,0,RW,RH);
   const sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;
-  ctx.save();ctx.translate(sx,sy);
+  ctx.save();
+  ctx.translate(GX,0);
+  ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();  // game stays inside its column
+  ctx.translate(sx,sy);
   const Y0=H*.42;
   const sky=ctx.createLinearGradient(0,0,0,Y0+H*.03);
   sky.addColorStop(0,pal[0]);sky.addColorStop(.7,pal[1]);sky.addColorStop(1,pal[2]);
   ctx.fillStyle=sky;ctx.fillRect(-20,-20,W+40,Y0+H*.03+20);
   ctx.fillStyle=pal[3];ctx.beginPath();ctx.arc(W/2,Y0-H*.02,W*.09,0,7);ctx.fill();
-  ctx.fillStyle='rgba(10,0,24,.9)';
-  for(let i=0;i<4;i++)ctx.fillRect(W/2-W*.1,Y0-H*.02-i*W*.028+W*.01,W*.2,W*.011);
+  if(theme==='neon'){
+    ctx.fillStyle='rgba(10,0,24,.9)';
+    for(let i=0;i<4;i++)ctx.fillRect(W/2-W*.1,Y0-H*.02-i*W*.028+W*.01,W*.2,W*.011);
+  }else drawScenery(t,Y0);
   ctx.fillStyle=pal[4];ctx.fillRect(-20,Y0,W+40,H-Y0+20);
 
   const first=Math.floor(pos/SEG),frac=(pos%SEG)/SEG;
@@ -571,6 +689,14 @@ function render(t){
     ctx.fillStyle=vg;ctx.fillRect(-20,-20,W+40,H+40);
   }
   ctx.restore();
+  // web mode: glowing rails framing the game column + keyboard hints in the gutter
+  if(GX>0){
+    ctx.fillStyle=pal[7];ctx.fillRect(GX-2,0,2,H);ctx.fillRect(GX+W,0,2,H);
+    if(GX>130){
+      ctx.fillStyle='rgba(160,170,200,.55)';ctx.font='13px Courier New';ctx.textAlign='center';
+      ['\u2190 \u2192  steer','\u2191 / W  jump','P  pause'].forEach((s,i)=>ctx.fillText(s,GX/2,H*.5+i*24));
+    }
+  }
 }
 
 // ---------- loop ----------
