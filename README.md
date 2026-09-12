@@ -1,9 +1,9 @@
 # neon-canyon-run
-Simple temple run replica - retro style, contains simple feature like. Made just for fun, welcome any feedback.
+Simple temple run replica - retro style, contains simple feature. Made just for fun, welcome any feedback.
 
 # Neon Canyon Run — Build Log
 
-## Initial Request (Slack draft brief)
+## Initial Request
 A premium mobile game developer brief for a single-file, mobile-responsive HTML5 canvas game inspired by Temple Run:
 - Pseudo-3D perspective canyon/road loop, no external assets or heavy frameworks
 - Procedurally curving road (sine-wave/segment curvature) with retro-neon styling
@@ -35,3 +35,6 @@ Built a headless QA harness (Node + stubbed browser APIs) and ran ~25,000 simula
 
 ## v7 — Continuous steering, accelerator pads, rocket power-up
 Replaced stepped lane-hopping with continuous drag steering — the ship now tracks your finger pixel-for-pixel (diagonal drags work), and the camera shift was widened so the outer lanes actually reach the road edges. Jump is now triggered by swipe velocity rather than distance. Added accelerator pads (glowing chevron strips) that launch a mega jump over a pre-laid line of gold gems, and a 🚀 rocket power-up granting 10 seconds of mega jumps that clear every obstacle, including arches. Clarified that tilt-steering "Denied" is an iOS HTTPS requirement, not a bug — the button now explains this directly. Verified with the full QA harness plus targeted tests for the boost pad, gem-scooping, continuous steering, and rocket mechanics.
+
+## v8 — Handle web/ mobile aspect switches, mouse drag sterring added for web and re-evaluates live on every resize
+
