@@ -3,6 +3,9 @@ Simple temple run replica - retro style, contains simple feature. Made just for 
 
 # Neon Canyon Run — Build Log
 
+<img width="258" height="578" alt="image" src="https://github.com/user-attachments/assets/dfcddf2a-e5b1-4a4c-a2ec-d1690e7084d2" />
+
+
 ## Initial Request
 A premium mobile game developer brief for a single-file, mobile-responsive HTML5 canvas game inspired by Temple Run:
 - Pseudo-3D perspective canyon/road loop, no external assets or heavy frameworks
